@@ -1,0 +1,11 @@
+# Byte-compiled
+__pycache__/
+
+# Environment
+venv/
+
+# DB / Data
+data/
+
+# macOS
+.DS_Store
