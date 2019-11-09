@@ -67,6 +67,8 @@ class DBSetup:
         if self.args.meta_file:
             print("Parsing a file at ", self.args.meta_file, "...")
 
+            # inserted_categories - dictionary in format {namespace: id}
+            inserted_categories = {}
             for item in self.parse(self.args.meta_file):
                 try:
                     item_id = item.get("asin")
@@ -106,9 +108,22 @@ class DBSetup:
                                 [item_id, related_item_id, key])
 
                 if categories is not None:
-                    for category in categories[0]:
-                        cursor.execute("INSERT INTO item_category_list(itemId, category) VALUES (?, ?)",
-                                       [item_id, category])
+                    for category_hierarchy_array in categories:
+                        namespace = ''
+                        previous_category_id = None
+                        for category in category_hierarchy_array:
+                            namespace += '.' + category
+                            if namespace in inserted_categories:
+                                previous_category_id = inserted_categories[namespace]
+                            else:
+                                cursor.execute("INSERT INTO category(parentCategoryId, namespace, name) "
+                                               "VALUES(?, ?, ?)", [previous_category_id, namespace, category])
+                                inserted_id = cursor.lastrowid
+                                previous_category_id = inserted_id
+                                inserted_categories[namespace] = inserted_id
+
+                        cursor.execute("INSERT INTO item_category_list(itemId, categoryId) VALUES (?, ?)",
+                                       [item_id, previous_category_id])
 
                 print("Item n.", i, " parsed: itemId - ", item_id)
                 i += 1
