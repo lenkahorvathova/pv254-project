@@ -1,9 +1,6 @@
 import argparse
 import gzip
-import os
 import sqlite3
-import subprocess
-import sys
 
 
 class DBSetup:
