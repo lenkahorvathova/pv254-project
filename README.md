@@ -32,9 +32,7 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
     - to deactivate Python environment: `deactivate`
 * Set up and populate a database:
     ```
-        python3 scripts/db_setup.py --meta_file "data/meta_Toys_and_Games.json.gz"
-        python3 scripts/db_setup.py --review_file "data/reviews_Toys_and_Games_5.json.gz"
-        python3 scripts/filter_items.py
+        source scripts/setup_db.sh
     ```
 * Check data in the database:
     - connect to DB: `sqlite3 data/amazon_product_data.db`
