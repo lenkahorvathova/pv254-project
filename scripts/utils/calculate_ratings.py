@@ -1,7 +1,9 @@
 import json
 import sqlite3
+import time
 
 PATH_TO_DB = "data/amazon_product_data.db"
+OUTPUT_FILE = "data/calculate_ratings_output.json"
 
 
 def calculate_ratings():
@@ -18,6 +20,8 @@ def calculate_ratings():
                                 itemId TEXT NOT NULL,
                                 rating REAL,
                                 FOREIGN KEY (itemId) REFERENCES item(id))''')
+        cursor = connection.execute("DELETE FROM item_rating")
+        cursor.close()
 
         cursor = connection.execute("SELECT id FROM item")
         all_items = [item[0] for item in cursor.fetchall()]
@@ -36,9 +40,10 @@ def calculate_ratings():
 
         item_rating_map = {}
 
-        i = 1
-        count_batches = len(input_batches)
-        for input_batch in input_batches:
+        num_of_batches = len(input_batches)
+        for i, input_batch in enumerate(input_batches):
+            print("processing batch {}/{}".format(i, num_of_batches))
+
             query = '''SELECT itemId, rating FROM review
                        WHERE itemId IN ({})'''.format(",".join(['"{}"'.format(item_id) for item_id in input_batch]))
             cursor = connection.execute(query)
@@ -73,9 +78,6 @@ def calculate_ratings():
                     without_reviews += 1
                     without_reviews_list.append(item_id)
 
-            print("{}/{}".format(i, count_batches))
-            i += 1
-
         output_batches = []
         curr_batch = []
         for index, pair in enumerate(item_rating_map.items()):
@@ -86,25 +88,30 @@ def calculate_ratings():
         output_batches.append(curr_batch)
 
         for batch in output_batches:
-            query = '''INSERT INTO item_rating(itemId, rating) VALUES {}'''.format(
-                ",".join(['("{}", {})'.format(key, value) for (key, value) in batch]))
+            query = '''INSERT INTO item_rating(itemId, rating) 
+                       VALUES {}'''.format(",".join(['("{}", {})'.format(key, value) for (key, value) in batch]))
             connection.execute(query)
             connection.commit()
 
     result_json = {
         "all_items": num_of_all_items,
         "without_reviews": {
-            "num_of_items": without_reviews
+            "num_of_items": without_reviews,
+            "list": without_reviews_list
         },
         "with_reviews": {
             "num_of_items": with_reviews,
+            "list": with_reviews_list,
             "items": with_reviews_json
         }
     }
 
-    with open("data/calculate_ratings_output.json", 'w') as file:
+    with open(OUTPUT_FILE, 'w') as file:
         file.write(json.dumps(result_json, indent=2))
 
+    print("--------------------------------------")
+    print("Calculating of ratings was SUCCESSFUL!")
+    print("--------------------------------------")
+    time.sleep(2)
 
-if __name__ == "__main__":
-    calculate_ratings()
+    return OUTPUT_FILE
