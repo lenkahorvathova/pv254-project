@@ -8,7 +8,7 @@ connection = create_connection()
 
 # if items are less than 10, no fallback specified, returns all it has
 def get_top_10_by_rating(items: list) -> list:
-    cursor = connection.execute("SELECT itemId, rating FROM item_rating WHERE itemId "
+    cursor = connection.execute("SELECT id, overallRating FROM item WHERE id "
                                 "IN ({})".format(",".join(['"{}"'.format(item_id) for item_id in items])))
     rated_pairs = [(pair[0], pair[1]) for pair in cursor.fetchall()]
 

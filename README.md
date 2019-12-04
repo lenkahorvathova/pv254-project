@@ -30,9 +30,9 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
         source venv/bin/activate
     ```
     - to deactivate Python environment: `deactivate`
-* Set up and populate a database:
+* Set up and populate a database (~ 6 min):
     ```
-        source scripts/setup_db.sh
+        python3 scripts/setup_db.py --review_file "data/reviews_Toys_and_Games_5.json.gz" --meta_file "data/meta_Toys_and_Games.json.gz"
     ```
 * Check data in the database:
     - connect to DB: `sqlite3 data/amazon_product_data.db`
@@ -47,21 +47,15 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
     pv254-project/
     └─── data/
     |   |   amazon_product_data.db
-    |   |   calculate_ratings_output.json
     │   │   meta_Toys_and_Games.json.gz
     │   │   reviews_Toys_and_Games_5.json.gz
     |
-    │   db_tables.sql
     │   README.md
+    │   schema.sql
     |
     └─── scripts/
-    |   └─── utils/
-    |   |   |   calculate_ratings.py
-    |   |
-    |   │   db_setup.py
-    |   |   filter_items.py
-    |   |   random_algo.py
-    |   |   script_categories.py
+    |   │   setup_db.py
+    |   |   ...
     │   
     └─── venv/
         |   ...

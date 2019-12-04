@@ -21,7 +21,7 @@ def recommend_products(product_id: str) -> list:
 
 # left here for now, so it is possible easily try out the algo
 # run the script with item's ID from table ITEM as an input
-# e.g. python3 script/random_algo.py "B000EGELPU"
+# e.g. python3 scripts/random_algo.py "B000EGELPU"
 if __name__ == "__main__":
     product_id = sys.argv[1]
     recommended = recommend_products(product_id)

@@ -7,12 +7,8 @@ CREATE TABLE IF NOT EXISTS item (id TEXT NOT NULL PRIMARY KEY,
                                  price REAL,
                                  imageUrl TEXT,
                                  salesCategory TEXT,
-                                 salesRank INTEGER);
-
-CREATE TABLE IF NOT EXISTS item_rating (itemId TEXT NOT NULL,
-                                        rating REAL,
-                                        FOREIGN KEY (itemId) REFERENCES item(id)
-                                        UNIQUE(itemId));
+                                 salesRank INTEGER,
+                                 overallRating REAL);
 
 CREATE TABLE IF NOT EXISTS review (id INTEGER NOT NULL PRIMARY KEY,
                                    userId TEXT NOT NULL,
@@ -21,12 +17,6 @@ CREATE TABLE IF NOT EXISTS review (id INTEGER NOT NULL PRIMARY KEY,
                                    reviewTime INTEGER,
                                    FOREIGN KEY (userId) REFERENCES user(id),
                                    FOREIGN KEY (itemId) REFERENCES item(id));
-
-CREATE TABLE IF NOT EXISTS user_review_list (userId TEXT NOT NULL,
-											                       reviewId TEXT NOT NULL,
-											                       FOREIGN KEY (userId) REFERENCES user(id),
-											                       FOREIGN KEY (reviewId) REFERENCES review(id),
-											                       UNIQUE(userId, reviewId));
 
 CREATE TABLE IF NOT EXISTS item_related_list (itemId TEXT NOT NULL,
 										  	                      relatedItemId TEXT NOT NULL,
