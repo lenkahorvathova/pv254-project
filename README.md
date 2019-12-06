@@ -2,14 +2,10 @@
 
 Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017/PV254) on FI MUNI.
 
-----------------------------------------------------------------------------------------------
-
 ## Team: 
-* Lenka Horváthová, 
-* Lucie Kurečková,
+* Lenka Horváthová
+* Lucie Kurečková
 * Markéta Vítková
-
-----------------------------------------------------------------------------------------------
 
 ## Setup
 * Clone this GIT repository: 
@@ -34,10 +30,9 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
         source venv/bin/activate
     ```
     - to deactivate Python environment: `deactivate`
-* Set up and populate a database:
+* Set up and populate a database (~ 6 min):
     ```
-        python3 scripts/db_setup.py --meta_file "data/meta_Toys_and_Games.json.gz"
-        python3 scripts/db_setup.py --review_file "data/reviews_Toys_and_Games_5.json.gz"
+        python3 scripts/setup_db.py --review_file "data/reviews_Toys_and_Games_5.json.gz" --meta_file "data/meta_Toys_and_Games.json.gz"
     ```
 * Check data in the database:
     - connect to DB: `sqlite3 data/amazon_product_data.db`
@@ -46,28 +41,25 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
     - a query example: `SELECT * FROM review LIMIT 10;`
     - exit sqlite3 program: `.quit`
 
-----------------------------------------------------------------------------------------------
-
 ## Directory and File Structure
 
 ```
-    pv254-project
-    └─── data
+    pv254-project/
+    └─── data/
     |   |   amazon_product_data.db
     │   │   meta_Toys_and_Games.json.gz
     │   │   reviews_Toys_and_Games_5.json.gz
     |
-    │   db_tables.sql
     │   README.md
+    │   schema.sql
     |
-    └─── scripts
-    |   │   db_setup.py
+    └─── scripts/
+    |   │   setup_db.py
+    |   |   ...
     │   
-    └─── venv
+    └─── venv/
         |   ...
 ```
-
-----------------------------------------------------------------------------------------------
 
 ## Citation 
 
