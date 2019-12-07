@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Toys & Games</title>
+    <style>
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .flex-item {
+            width: 32%;
+            position: relative;
+            margin-top: 2%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .flex-column {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .title {
+            background-color: black;
+            color: white;
+            font-size: 40px;
+            margin: auto;
+        }
+
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            text-align: center;
+            font-family: arial, sans-serif;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .price {
+            color: grey;
+            font-size: 22px;
+        }
+
+        .card button {
+            border: none;
+            outline: 0;
+            padding: 12px;
+            color: white;
+            background-color: black;
+            text-align: center;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+        }
+
+        .card button:hover {
+            opacity: 0.7;
+        }
+
+        .stars {
+            position: relative;
+            display: inline-block;
+            font-size: 20pt;
+            color: grey;
+            height: 1em;
+            line-height: 1em;
+        }
+
+        .stars:before {
+            content: "\2606\2606\2606\2606\2606";
+        }
+
+        .stars:after {
+            content: "\2605\2605\2605\2605\2605";
+            position: absolute;
+            left: 0;
+            overflow: hidden;
+            width: var(--w, 50%);
+            color: rgb(255, 200, 0);
+            z-index: -1;
+        }
+    </style>
+</head>
+
+<body>
+<div>
+    <h1 align="center" class="title">Toys & Games</h1>
+
+    <div class="flex-container">
+        {% for product in products %}
+
+            <div class="flex-item card">
+                <div class="flex-column" style="height:400px;">
+                    <img src={{ product["imageUrl"] }} style="width:100%">
+                </div>
+
+                <div class="flex-column" style="flex-grow:2">
+                    <h3>{{ product["title"] }}</h3>
+                </div>
+
+                <p class="price">{{ product["price"] }} €</p>
+
+                <div>
+                    <div class="stars" style="--w:{{ product["percentageRating"] }}%;"></div>
+                </div>
+
+                <p style="margin-bottom:0">
+                    <button onclick="location.href='./{{ product["id"] }}'">Open</button>
+                </p>
+            </div>
+
+        {% endfor %}
+    </div>
+</div>
+</body>
+
+</html>
