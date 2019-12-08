@@ -3,7 +3,7 @@ import sys
 from scripts.utils import create_connection
 
 
-def recommend_products(product_id: str) -> list:
+def recommend_products_randomly(product_id: str) -> list:
     connection = create_connection()
 
     with connection:

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ product["title"] }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheet.css') }}">
+</head>
+
+<body>
+<div class="flex-wrapper">
+
+    {% if message %}
+        <p align="center" style="background-color: green; margin: 0; padding: 5px">{{ message }}</p>
+    {% endif %}
+
+
+    <div class="product-container">
+        <button class="button" style="width: 200px" onclick="location.href='/'">Home</button>
+        <button class="button" style="width: 200px" onclick="location.href='/product/random'">Next >>
+        </button>
+    </div>
+
+    <main class="flex-container" style="justify-content: space-around;">
+
+        <div class="product-left">
+            <img class="product-image" src={{ product["imageUrl"] }}>
+        </div>
+
+        <div class="product-right">
+            <div class="product-description">
+                <span class="product-text">{{ product["salesCategory"] }}</span>
+                <h1>{{ product["title"] }}</h1>
+                <div>
+                    <span class="main-stars" style="--w:{{ product["percentageRating"] }}%;"></span>
+                </div>
+                <p>{{ product["description"] }}</p>
+            </div>
+
+            <span class="price">{{ product["price"] }} €</span>
+        </div>
+    </main>
+
+    <form action="./{{ product["id"] }}/feedback" method="post">
+        <input type="hidden" name="item-id" value="{{ product["id"] }}">
+        <div style="border-bottom: 1px solid #E1E8EE">
+            <h1 class="main-title" align="center" style="border: 1px solid #E1E8EE; font-size: 32px">
+                Recommendations</h1>
+            {% for algo_products in algos %}
+
+                <p class="product-text" style="margin-left: 20px">{{ loop.index }}. algorithm</p>
+                <fieldset style="margin-left:20px; margin-right: 20px; border: 1px solid #E1E8EE">
+                    <legend>How would you rate this recommendation?</legend>
+                    <label class="feedback-choice">
+                        <input type="radio" name="{{ algo_products[1] }}" value="great"> great</label>
+                    <label class="feedback-choice">
+                        <input type="radio" name="{{ algo_products[1] }}" value="good"> good</label>
+                    <label class="feedback-choice">
+                        <input type="radio" name="{{ algo_products[1] }}" value="bad"> bad</label>
+                    <label class="feedback-choice">
+                        <input type="radio" name="{{ algo_products[1] }}" value="horrible"> horrible</label>
+                </fieldset>
+
+                <div id={{ algo_products[1] }} class="product-card-container">
+                    {% for product in algo_products[0] %}
+                        <div class="product-card">
+                            <div class="flex-container" style="height:200px;margin:auto">
+                                <img class="main-image" src={{ product["imageUrl"] }}>
+                            </div>
+                            <h3 class="main-name">{{ product["title"] }}</h3>
+                            <span class="price">{{ product["price"] }} €</span>
+                            <div>
+                                <span class="main-stars" style="--w:{{ product["percentageRating"] }}%;"></span>
+                            </div>
+                            <p style="margin-bottom:0">
+                                <button class="button" onclick="location.href='./{{ product["id"] }}'">Open
+                                </button>
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% endfor %}
+        </div>
+
+        <p align="center">
+            <button class="button" style="width: 200px" type="submit">Submit you feedback
+            </button>
+        </p>
+    </form>
+</div>
+</body>
+
+</html>

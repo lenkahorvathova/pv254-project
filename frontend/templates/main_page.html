@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Toys & Games</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheet.css') }}">
+</head>
+
+<body>
+<h1 align="center" class="main-title">Toys & Games</h1>
+
+<main class="flex-container" style="justify-content: center;">
+    {% for product in products %}
+
+        <div class="main-card">
+            <div class="flex-container" style="height:400px;margin:auto">
+                <img class="main-image" src={{ product["imageUrl"] }}>
+            </div>
+            <h3 class="main-name">{{ product["title"] }}</h3>
+            <span class="price">{{ product["price"] }} €</span>
+            <div>
+                <span class="main-stars" style="--w:{{ product["percentageRating"] }}%;"></span>
+            </div>
+            <p style="margin-bottom:0">
+                <button class="button" onclick="location.href='./product/{{ product["id"] }}'">Open</button>
+            </p>
+        </div>
+
+    {% endfor %}
+</main>
+</body>
+
+</html>
