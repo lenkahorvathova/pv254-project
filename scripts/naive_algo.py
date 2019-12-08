@@ -3,26 +3,25 @@ from random import shuffle
 
 from scripts.utils import create_connection
 
-connection = create_connection()
-
 
 # if items are less than 10, no fallback specified, returns all it has
 def get_top_10_by_rating(items: list) -> list:
-    cursor = connection.execute("SELECT id, overallRating FROM item WHERE id "
-                                "IN ({})".format(",".join(['"{}"'.format(item_id) for item_id in items])))
-    rated_pairs = [(pair[0], pair[1]) for pair in cursor.fetchall()]
+    with create_connection() as connection:
+        cursor = connection.execute("SELECT id, overallRating FROM item WHERE id "
+                                    "IN ({})".format(",".join(['"{}"'.format(item_id) for item_id in items])))
+        rated_pairs = [(pair[0], pair[1]) for pair in cursor.fetchall()]
 
-    rated_pairs.sort(key=lambda pair: pair[1], reverse=True)
+        rated_pairs.sort(key=lambda pair: pair[1], reverse=True)
 
-    # adds a bit of randomness to the result
-    rated_pairs = rated_pairs[:20]
-    shuffle(rated_pairs)
+        # adds a bit of randomness to the result
+        rated_pairs = rated_pairs[:20]
+        shuffle(rated_pairs)
 
-    return [pair[0] for pair in rated_pairs[:10]]
+        return [pair[0] for pair in rated_pairs[:10]]
 
 
 def recommend_products_by_related(product_id: str, modification_type: str) -> list:
-    with connection:
+    with create_connection() as connection:
 
         if modification_type == "all":
             cursor = connection.execute("SELECT relatedItemId FROM item_related_list WHERE itemId=(?)", (product_id,))
@@ -37,7 +36,7 @@ def recommend_products_by_related(product_id: str, modification_type: str) -> li
 
 
 def recommend_products_by_category(product_id: str, modification_type: str) -> list:
-    with connection:
+    with create_connection() as connection:
         cursor = connection.execute("SELECT categoryId FROM item_category_list WHERE itemId=(?)", (product_id,))
         product_category = cursor.fetchone()[0]
 
