@@ -1,16 +1,48 @@
-import sqlite3
+from collections import Counter
+import operator
+from sqlite3 import Connection
 
+from scripts.utils import create_connection
 
 class RelatedItemsExplorer:
-    sqlite_db = "../data/amazon_product_data.db"
+
+    connection: Connection
+
+    def __init__(self):
+        self.connection = create_connection()
+
+    def related_statistics(self):
+        item_relations_counts_cur = self.connection.execute("SELECT count(item_related_list.relatedItemId) FROM item LEFT JOIN item_related_list ON item.id = item_related_list.itemId GROUP BY item_related_list.itemId;")
+        item_relations_counts = [c[0] for c in item_relations_counts_cur]
+        item_relations_counts_statistics = Counter(item_relations_counts)
+        item_relations_counts_sorted = sorted(item_relations_counts)
+        item_relations_counts_statistics_sorted = sorted(item_relations_counts_statistics.items())
+
+        with open('../data/statistics/product_relations_counts.txt', 'w', encoding='utf-8') as outp:
+            outp.write('Postupně pro jednotlivé produkty počty jejich related produktů.\n')
+            for c in item_relations_counts_sorted:
+                outp.write(str(c) + '\n')
+
+        with open('../data/statistics/product_relations_counts_statistics.txt', 'w', encoding='utf-8') as outp:
+            outp.write('x\ty ... Je y produktů, které mají právě x related produktů.\n')
+            for c in item_relations_counts_statistics_sorted:
+                outp.write(str(c[0]) + '\t' + str(c[1]) + '\n')
+
+        relations_counts_cur = self.connection.execute("SELECT relation, count(itemId) FROM item_related_list GROUP BY relation;")
+        relations_counts = [c_rel for c_rel in relations_counts_cur]
+        relations_counts_sorted = sorted(relations_counts, key=operator.itemgetter(1))
+
+        with open('../data/statistics/relations_counts.txt', 'w', encoding='utf-8') as outp:
+            outp.write('Název relace a kolikrát se vyskytuje.\n')
+            for (rel, count) in relations_counts_sorted:
+                outp.write(rel + '\t' + str(count) + '\n')
 
     def check_symmetry(self, limit=20, offset=0):
 
-        connection = sqlite3.connect(self.sqlite_db)
-        cursor = connection.cursor()
+        cursor = self.connection.cursor()
 
-        sample_items_cur = connection.execute("SELECT id FROM item DESC LIMIT ? OFFSET ?;",
-                                              [limit, offset])
+        sample_items_cur = self.connection.execute("SELECT id FROM item DESC LIMIT ? OFFSET ?;",
+                                                   [limit, offset])
         sample_items = sample_items_cur.fetchall()
 
         also_bought_symmetric = 0
@@ -26,8 +58,8 @@ class RelatedItemsExplorer:
 
         for sample_item in sample_items:
             item_id = sample_item[0]
-            relations = connection.execute("SELECT relatedItemId, relation FROM item_related_list WHERE itemId = ?;",
-                                           [item_id])
+            relations = self.connection.execute("SELECT relatedItemId, relation FROM item_related_list WHERE itemId = ?;",
+                                                [item_id])
 
             for (related_item_id, relation) in relations:
                 rel_count += 1
@@ -72,7 +104,7 @@ class RelatedItemsExplorer:
                     else:
                         buy_after_viewing_symmetric += 1
 
-        connection.close()
+        self.connection.close()
 
         print('Number of relations: ' + str(rel_count))
         print('Also bought:')
@@ -90,9 +122,7 @@ class RelatedItemsExplorer:
 
     def get_relations(self, item_id):
 
-        connection = sqlite3.connect(self.sqlite_db)
-
-        aa = connection.execute("SELECT title FROM item WHERE id = ?;", [item_id])
+        aa = self.connection.execute("SELECT title FROM item WHERE id = ?;", [item_id])
         item_name_tuple = aa.fetchone()
         if (item_name_tuple is not None) and (item_name_tuple[0] is not None):
             item_name = item_name_tuple[0]
@@ -101,15 +131,15 @@ class RelatedItemsExplorer:
         print('Item name: ' + item_name)
         print()
 
-        relations = connection.execute("SELECT relatedItemId, relation FROM item_related_list WHERE itemId = ?;",
-                                       [item_id])
+        relations = self.connection.execute("SELECT relatedItemId, relation FROM item_related_list WHERE itemId = ?;",
+                                            [item_id])
         related_items = []
 
         for related_item_id, relation in relations:
-            name = connection.execute('SELECT title FROM item WHERE id = ?', [related_item_id])
+            name = self.connection.execute('SELECT title FROM item WHERE id = ?', [related_item_id])
             related_items.append((relation, related_item_id, name.fetchone()))
 
-        connection.close()
+        self.connection.close()
 
         for related_item in related_items:
             print(related_item)
@@ -130,11 +160,10 @@ class RelatedItemsExplorer:
     def get_relations_for_graph(self, item_id, color):
         not_only_also_view = False
 
-        connection = sqlite3.connect(self.sqlite_db)
-        relations = connection.execute("SELECT relatedItemId, relation FROM item_related_list WHERE itemId = ?;",
-                                       [item_id])
+        relations = self.connection.execute("SELECT relatedItemId, relation FROM item_related_list WHERE itemId = ?;",
+                                            [item_id])
 
-        aa = connection.execute("SELECT title FROM item WHERE id = ?;", [item_id])
+        aa = self.connection.execute("SELECT title FROM item WHERE id = ?;", [item_id])
         item_name_tuple = aa.fetchone()
         if (item_name_tuple is not None) and (item_name_tuple[0] is not None):
             item_name = item_name_tuple[0]
@@ -161,7 +190,7 @@ class RelatedItemsExplorer:
         graph = []
 
         for (related_item_id, relation) in relations:
-            name_cur = connection.execute("SELECT title FROM item WHERE id = ?", [related_item_id])
+            name_cur = self.connection.execute("SELECT title FROM item WHERE id = ?", [related_item_id])
             name_tuple = name_cur.fetchone()
             if (name_tuple is not None) and (name_tuple[0] is not None):
                 name = name_tuple[0]
@@ -174,7 +203,7 @@ class RelatedItemsExplorer:
             if relation != 'also_viewed':
                 not_only_also_view = True
 
-        connection.close()
+        self.connection.close()
 
         sep = ';\n'
         graph_string = sep.join(graph)
@@ -185,14 +214,15 @@ class RelatedItemsExplorer:
         return graph_string
 
     def get_name(self, item_id):
-        connection = sqlite3.connect(self.sqlite_db)
-
-        aa = connection.execute("SELECT title FROM item WHERE id = ?;", [item_id])
+        aa = self.connection.execute("SELECT title FROM item WHERE id = ?;", [item_id])
         print(aa.fetchone())
 
-        connection.close()
+        self.connection.close()
 
 
 if __name__ == "__main__":
     related_items_explorer = RelatedItemsExplorer()
-    related_items_explorer.check_symmetry()
+    # related_items_explorer.check_symmetry()
+    # id = 'B00004NKJO'
+    # related_items_explorer.get_relations(id)
+    related_items_explorer.related_statistics()
