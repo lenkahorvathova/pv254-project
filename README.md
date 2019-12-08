@@ -33,19 +33,19 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
     - to deactivate Python environment: `deactivate`
 * Install requirements:
     ```
-        $ pip install requirements.txt 
+        $ pip install -r requirements.txt 
     ```
 * Set up and populate a database (~ 6 min):
     ```
         $ python3 scripts/setup_db.py --review_file "data/reviews_Toys_and_Games_5.json.gz" --meta_file "data/meta_Toys_and_Games.json.gz"
     ```
 * Check data in the database:
-<<<<<<< HEAD
     - connect to DB: `$ sqlite3 data/amazon_product_data.db`
     - list tables in DB: `> .tables`
     - view a schema of a table: `> .schema <table>`
     - a query example: `> SELECT * FROM review LIMIT 10;`
     - exit sqlite3 program: `> .quit`
+
 * Set FLASK_APP variable:
     ```
         $ export FLASK_APP=frontend/server.py

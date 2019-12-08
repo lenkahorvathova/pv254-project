@@ -1,18 +1,19 @@
-import sqlite3
-import pandas as pd
 import os
 import time
-import numpy as np
+
+import pandas as pd
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
 
-connection = sqlite3.connect("data/amazon_product_data.db")
+from scripts.utils import create_connection
+
 
 class KnnRecommender:
     """
     This is an item-based collaborative filtering recommender with
     KNN implmented by sklearn
     """
+
     def __init__(self):
         self.model = NearestNeighbors()
         self.item_user_mat_sparse, self.hashmap = self._prep_data()
@@ -43,30 +44,33 @@ class KnnRecommender:
         1. item-user scipy sparse matrix
         2. hashmap of itemId to row index in item-user scipy sparse matrix
         """
-        # read data
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM review")
-        reviews = cursor.fetchall()
-        cursor.close()
+        connection = create_connection()
 
-        columns = ['id', 'userId', 'itemId', 'rating', 'reviewTime']
-        df_ratings = pd.DataFrame(reviews, columns=columns)
-        # pivot and create movie-user matrix
-        item_user_mat = df_ratings.pivot(
-            index='itemId', columns='userId', values='rating').fillna(0)
-        #hashmap of itemId to row index in item-user scipy sparse matrix
-        hashmap = {}
-        index = 0
-        for i in item_user_mat.index:
-            hashmap[index] = i
-            index = index + 1
+        with connection:
+            # read data
+            cursor = connection.cursor()
+            cursor.execute("SELECT * FROM review")
+            reviews = cursor.fetchall()
+            cursor.close()
 
-        # transform matrix to scipy sparse matrix
-        item_user_mat_sparse = csr_matrix(item_user_mat.values)
+            columns = ['id', 'userId', 'itemId', 'rating', 'reviewTime']
+            df_ratings = pd.DataFrame(reviews, columns=columns)
+            # pivot and create movie-user matrix
+            item_user_mat = df_ratings.pivot(
+                index='itemId', columns='userId', values='rating').fillna(0)
+            # hashmap of itemId to row index in item-user scipy sparse matrix
+            hashmap = {}
+            index = 0
+            for i in item_user_mat.index:
+                hashmap[index] = i
+                index = index + 1
 
-        # clean up
-        del df_ratings, item_user_mat
-        return item_user_mat_sparse, hashmap
+            # transform matrix to scipy sparse matrix
+            item_user_mat_sparse = csr_matrix(item_user_mat.values)
+
+            # clean up
+            del df_ratings, item_user_mat
+            return item_user_mat_sparse, hashmap
 
     def _inference(self, model, data,
                    itemId, n_recommendations):
@@ -88,7 +92,7 @@ class KnnRecommender:
         # inference
         distances, indices = model.kneighbors(
             data[itemId],
-            n_neighbors=n_recommendations+1)
+            n_neighbors=n_recommendations + 1)
         # get list of raw idx of recommendations
         raw_recommends = \
             sorted(
@@ -119,30 +123,34 @@ class KnnRecommender:
             self.model, self.item_user_mat_sparse,
             idx, n_recommendations)
         # print results
-        recommendedItemId = []
+        recommended_item_id = []
         print('Recommendations for {}:'.format(itemId))
         for i, (idx, dist) in enumerate(raw_recommends):
             print('{0}: {1}, with distance '
-                  'of {2}'.format(i+1, self.hashmap[idx], dist))
-            recommendedItemId.insert(0, self.hashmap[idx])
+                  'of {2}'.format(i + 1, self.hashmap[idx], dist))
+            recommended_item_id.insert(0, self.hashmap[idx])
         del raw_recommends
-        return recommendedItemId
+        return recommended_item_id
 
 
-def getMeanPerItemList():
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM review")
-    reviews = cursor.fetchall()
-    cursor.close()
+def get_mean_per_item_list():
+    connection = create_connection()
 
-    columns = ['id', 'userId', 'itemId', 'rating', 'reviewTime']
-    df_ratings = pd.DataFrame(reviews, columns=columns)
-    # pivot and create item-user matrix
-    item_user_mat = df_ratings.pivot(
-        index='itemId', columns='userId', values='rating')
-    return item_user_mat.mean(axis=1, skipna=True)
+    with connection:
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM review")
+        reviews = cursor.fetchall()
+        cursor.close()
 
-def hybridAlgorithm(itemId, n_recommendations):
+        columns = ['id', 'userId', 'itemId', 'rating', 'reviewTime']
+        df_ratings = pd.DataFrame(reviews, columns=columns)
+        # pivot and create item-user matrix
+        item_user_mat = df_ratings.pivot(
+            index='itemId', columns='userId', values='rating')
+        return item_user_mat.mean(axis=1, skipna=True)
+
+
+def hybrid_algorithm(itemId, n_recommendations):
     """
     Return
     ------
@@ -150,28 +158,31 @@ def hybridAlgorithm(itemId, n_recommendations):
     as second thing the best item id according to hybrid algorithm(collaboration + mean)
     """
 
-    #first parametr is id of item, second number of items to recommend
-    recommendedItemId = collaboraborationFiltering(itemId, n_recommendations)
+    # first parametr is id of item, second number of items to recommend
+    recommended_item_id = collaboration_filtering(itemId, n_recommendations)
     #####
-    meanPerItem = getMeanPerItemList()
-    itemIdWithHighestReviewMean = recommendedItemId[0]
-    for itemId in recommendedItemId:
-        if meanPerItem[itemId] > meanPerItem[itemIdWithHighestReviewMean]:
-            print('new value for itemIdWithHighestReviewMean', itemId, meanPerItem[itemId])
-            itemIdWithHighestReviewMean = itemId
-    print('best item id to recommend according to hybrid', itemIdWithHighestReviewMean)
+    mean_per_item = get_mean_per_item_list()
+    item_id_with_highest_review_mean = recommended_item_id[0]
+    for itemId in recommended_item_id:
+        if mean_per_item[itemId] > mean_per_item[item_id_with_highest_review_mean]:
+            print('new value for item_id_with_highest_review_mean', itemId, mean_per_item[itemId])
+            item_id_with_highest_review_mean = itemId
+    print('best item id to recommend according to hybrid', item_id_with_highest_review_mean)
 
-    return recommendedItemId[0], itemIdWithHighestReviewMean
+    return recommended_item_id[0], item_id_with_highest_review_mean
 
-def collaboraborationFiltering(itemId, n_recommendations):
+
+def collaboration_filtering(itemId, n_recommendations):
     recommender = KnnRecommender()
     # make recommendations, first parametr is id of item, second number of items to recommend
-    recommendedItemId = recommender.make_recommendations(itemId, n_recommendations)
+    recommended_item_id = recommender.make_recommendations(itemId, n_recommendations)
 
-    return recommendedItemId
+    return recommended_item_id
 
-t0 = time.time()
-#first parametr is id of item, second number of items to recommend
-hybridAlgorithm('B00CBT674G', 10)
-print('It took my system {:.2f}s to make recommendation \n\
-                          '.format(time.time() - t0))
+
+if __name__ == "__main__":
+    t0 = time.time()
+    # first parametr is id of item, second number of items to recommend
+    hybrid_algorithm('B00CBT674G', 10)
+    print('It took my system {:.2f}s to make recommendation \n\
+                              '.format(time.time() - t0))

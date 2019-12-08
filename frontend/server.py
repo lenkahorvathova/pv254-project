@@ -3,6 +3,7 @@ from random import shuffle
 
 from flask import Flask, render_template, abort, redirect, request
 
+from scripts.collaborative_filtering import collaboration_filtering, hybrid_algorithm
 from scripts.naive_algo import recommend_products_by_related, recommend_products_by_category
 from scripts.random_algo import recommend_products_randomly
 from scripts.utils import create_connection
@@ -60,6 +61,9 @@ def get_recommendation(item_id: str, algo_type: str) -> (list, str):
     elif algo_type == "sibling_category":
         products = recommend_products_by_category(item_id, "sibling_category")
 
+    elif algo_type == "collaborative_filtering":
+        products = collaboration_filtering(item_id, 10)
+
     result = [get_item_dict(product) for product in products]
     return result, algo_type
 
@@ -98,7 +102,8 @@ def detail(item_id):
         get_recommendation(item_id, "related_bought_together"),
         get_recommendation(item_id, "related_buy_after_viewing"),
         get_recommendation(item_id, "same_category"),
-        get_recommendation(item_id, "sibling_category")
+        get_recommendation(item_id, "sibling_category"),
+        get_recommendation(item_id, "collaborative_filtering")
     ]
 
     shuffle(algos)
