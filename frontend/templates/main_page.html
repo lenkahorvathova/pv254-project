@@ -22,9 +22,7 @@
             <div>
                 <span class="main-stars" style="--w:{{ product["percentageRating"] }}%;"></span>
             </div>
-            <p style="margin-bottom:0">
-                <button class="button" onclick="location.href='./product/{{ product["id"] }}'">Open</button>
-            </p>
+            <a class="button" href="product/{{ product["id"] }}">Open</a>
         </div>
 
     {% endfor %}

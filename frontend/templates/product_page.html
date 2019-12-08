@@ -16,12 +16,12 @@
 
 
     <div class="product-container">
-        <button class="button" style="width: 200px" onclick="location.href='/'">Home</button>
-        <button class="button" style="width: 200px" onclick="location.href='/product/random'">Next >>
-        </button>
+        <a class="button product-main-button" style="width: 200px" href="/">Home</a>
+        <a class="button product-main-button" style="width: 200px" href="/product/random">Next >>
+        </a>
     </div>
 
-    <main class="flex-container" style="justify-content: space-around;">
+    <main class="flex-container" style="justify-content: center; align-items: center;">
 
         <div class="product-left">
             <img class="product-image" src={{ product["imageUrl"] }}>
@@ -64,18 +64,19 @@
                 <div id={{ algo_products[1] }} class="product-card-container">
                     {% for product in algo_products[0] %}
                         <div class="product-card">
-                            <div class="flex-container" style="height:200px;margin:auto">
+                            <div class="product-image-container" style="height:200px;margin:auto">
                                 <img class="main-image" src={{ product["imageUrl"] }}>
                             </div>
-                            <h3 class="main-name">{{ product["title"] }}</h3>
+                            <div class="product-main-name-container">
+                                <h3 class="product-main-name">{{ product["title"] }}</h3>
+                            </div>
                             <span class="price">{{ product["price"] }} €</span>
                             <div>
                                 <span class="main-stars" style="--w:{{ product["percentageRating"] }}%;"></span>
                             </div>
-                            <p style="margin-bottom:0">
-                                <button class="button" onclick="location.href='./{{ product["id"] }}'">Open
-                                </button>
-                            </p>
+                            <a class="button product-button" href="{{ product["id"] }}">
+                                Open
+                            </a>
                         </div>
                     {% endfor %}
                 </div>

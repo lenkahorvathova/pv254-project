@@ -27,7 +27,8 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
 * Create and activate Python environment:
     ```
         $ python3 -m venv venv
-        $ source venv/bin/activate
+        $ source venv/bin/activate (Mac)
+        $ venv\Scripts\activate (Windows)
     ```
     - to deactivate Python environment: `deactivate`
 * Install requirements:
@@ -50,7 +51,7 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
     ```
 * Run the application locally and go to 'http://127.0.0.1:5000/':
     ```
-        $ python3 frontent/server.py
+        $ python3 frontend/server.py
     ```
 
 ## Directory and File Structure
@@ -61,16 +62,22 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
     |   |   amazon_product_data.db
     │   │   meta_Toys_and_Games.json.gz
     │   │   reviews_Toys_and_Games_5.json.gz
-    |
-    │   README.md
-    │   schema.sql
+    |   
+    └─── frontend/
+    |   └─── static/
+    |   └─── templates/
+    |   |
+    |   |   server.py
     |
     └─── scripts/
     |   │   setup_db.py
     |   |   ...
     │   
     └─── venv/
-        |   ...
+    |
+    │   README.md
+    |   requirements.txt
+    │   schema.sql
 ```
 
 ## Citation 

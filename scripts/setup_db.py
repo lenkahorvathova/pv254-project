@@ -217,7 +217,8 @@ class DBSetup:
             if related is not None:
                 for key in related.keys():
                     for related_item_id in related.get(key):
-                        to_insert_related.append([item_id, related_item_id, key])
+                        if related_item_id in filtered_items:
+                            to_insert_related.append([item_id, related_item_id, key])
 
             if categories is not None:
                 for category_hierarchy_array in categories:
