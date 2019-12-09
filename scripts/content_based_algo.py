@@ -47,15 +47,14 @@ class SimilarityRecommender:
     def recommend_products(self, count: int, find_similar_items_callback: callable,
                            count_similarities_callback: callable) -> list:
         self.similar_items = find_similar_items_callback(self.connection, self.item_id)
-        if count > len(self.similar_items):
-            raise Exception('There is only ' + str(
-                len(self.similar_items)) + ' similar product(s) returned by algorithm, can not recommend ' + str(count))
         self.similarity_matrix = count_similarities_callback(self.connection, self.similar_items)
 
         return self.get_diverse_recommenations(count)
 
     # Do not call directly
     def get_diverse_recommenations(self, count) -> list:
+        if count > len(self.similarity_matrix):
+            count = len(self.similarity_matrix)
         # Find the best product as initial
         best_item_id = None
         best = -1
@@ -132,8 +131,6 @@ def find_similar_items_related(connection: Connection, main_item_id: str) -> dic
         i += 1
 
     similar_items.remove(main_item_id)
-    if len(similar_items) < 10:
-        raise Exception('Item ' + main_item_id + ' has not enough relations to recommend by relations.')
 
     result_items = {}
     for item_id in similar_items:
