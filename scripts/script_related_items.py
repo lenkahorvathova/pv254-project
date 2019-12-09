@@ -124,7 +124,7 @@ class RelatedItemsExplorer:
 
         aa = self.connection.execute("SELECT title FROM item WHERE id = ?;", [item_id])
         item_name_tuple = aa.fetchone()
-        if (item_name_tuple is not None) and (item_name_tuple[0] is not None):
+        if item_name_tuple[0] is not None:
             item_name = item_name_tuple[0]
         else:
             item_name = 'No title'
@@ -192,7 +192,7 @@ class RelatedItemsExplorer:
         for (related_item_id, relation) in relations:
             name_cur = self.connection.execute("SELECT title FROM item WHERE id = ?", [related_item_id])
             name_tuple = name_cur.fetchone()
-            if (name_tuple is not None) and (name_tuple[0] is not None):
+            if name_tuple[0] is not None:
                 name = name_tuple[0]
             else:
                 name = 'No title'

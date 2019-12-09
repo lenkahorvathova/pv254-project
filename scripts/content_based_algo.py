@@ -1,3 +1,4 @@
+from collections import Counter
 from sqlite3 import Connection
 
 from scripts.utils import create_connection
@@ -9,7 +10,10 @@ class Item:
     title: str
     image_url: str
     overall_rating: float
-    related: iter
+    related: list
+
+    def __init__(self):
+        self.related = []
 
     def set_properties(self, id: str, title: str, image_url: str, overall_rating: float):
         self.id = id
@@ -17,23 +21,8 @@ class Item:
         self.image_url = image_url
         self.overall_rating = overall_rating
 
-    # items_set: set of <Item>s - Restriction of related items to the given set.
-    def get_related(self, items_set: iter = None):
-        if self.related is None:
-            cursor = self.connection.cursor()
-            if items_set is None:
-                cursor.execute("SELECT relatedItemId FROM item_related_list WHERE itemId = ?;", [self.id])
-            else:
-                cursor.execute(
-                    "SELECT relatedItemId FROM item_related_list WHERE itemId = ? AND relatedItemId IN ({});".format(
-                        ",".join(['"{}"'.format(item.id) for item in items_set])), [self.id])
-            self.related = {item[0] for item in cursor.fetchall()}
-
-        return self.related
-
 
 class SimilarityRecommender:
-
     connection: Connection
     item_id: str
     # {id -> Item}
@@ -57,11 +46,11 @@ class SimilarityRecommender:
     # Return ordered list of recommended <Item>s.
     def recommend_products(self, count: int, find_similar_items_callback: callable,
                            count_similarities_callback: callable) -> list:
-        self.similar_items = find_similar_items_callback(self.item_id)
+        self.similar_items = find_similar_items_callback(self.connection, self.item_id)
         if count > len(self.similar_items):
             raise Exception('There is only ' + str(
                 len(self.similar_items)) + ' similar product(s) returned by algorithm, can not recommend ' + str(count))
-        self.similarity_matrix = count_similarities_callback(self.similar_items)
+        self.similarity_matrix = count_similarities_callback(self.connection, self.similar_items)
 
         return self.get_diverse_recommenations(count)
 
@@ -114,20 +103,53 @@ class SimilarityRecommender:
 
         def sort_func(item: Item) -> float:
             return item.overall_rating
+
         recommended_items.sort(key=sort_func, reverse=True)
 
         return recommended_items
 
 
-# def add_related_items(connection, item_id: str, items: set) -> set:
-#     items_cur = connection.execute("SELECT relatedItemId FROM item_related_list WHERE itemId = ?;", [item_id])
-#     for item in items_cur.fetchall():
-#         items.add(item[0])
-#
-#     return items
+def find_similar_items_related(connection: Connection, main_item_id: str) -> dict:
+    cursor = connection.cursor()
+
+    similar_items = {main_item_id}  # the result
+    items_relations_sets = {}  # optimization - remember the found relations for the items
+    last_added_items = {main_item_id}  # new discovered items in last iteration
+    thresholds = [float('inf'), 101, 21, 11]  # how many items must be found to not start new iteration
+    i = 0
+    while i < len(thresholds) and len(similar_items) < thresholds[i]:
+        new_items = set()
+        for item_id in last_added_items:
+            cur = cursor.execute("SELECT relatedItemId FROM item_related_list WHERE itemId = ?;", [item_id])
+            ids = [new_item[0] for new_item in cur]
+            items_relations_sets[item_id] = ids
+            new_items.update(ids)
+
+        last_added_items = new_items.difference(similar_items)
+        if len(last_added_items) == 0:  # optimization
+            break
+        similar_items.update(last_added_items)
+        i += 1
+
+    similar_items.remove(main_item_id)
+    if len(similar_items) < 10:
+        raise Exception('Item ' + main_item_id + ' has not enough relations to recommend by relations.')
+
+    result_items = {}
+    for item_id in similar_items:
+        cur = cursor.execute("SELECT title, imageUrl, overallRating FROM item WHERE id = ?;", [item_id])
+        row = cur.fetchone()
+        item = Item()
+        item.set_properties(item_id, *row)
+        if item_id in items_relations_sets:
+            item.related = items_relations_sets[item_id]
+        result_items[item_id] = item
+
+    cursor.close()
+    return result_items
 
 
-def find_similar_items_test(item_id: str) -> dict:
+def find_similar_items_test(connection: Connection, item_id: str) -> dict:
     item1 = Item()
     item2 = Item()
     item3 = Item()
@@ -148,11 +170,85 @@ def find_similar_items_test(item_id: str) -> dict:
     item8.set_properties('8', 'Item 8', '', 4)
     item9.set_properties('9', 'Item 9', '', 2.6)
     item10.set_properties('10', 'Item 10', '', 3.8)
-    items = {'1': item1, '2': item2, '3': item3, '4': item4, '5': item5, '6': item6, '7': item7, '8': item8, '9': item9, '10': item10}
+    items = {'1': item1, '2': item2, '3': item3, '4': item4, '5': item5, '6': item6, '7': item7, '8': item8, '9': item9,
+             '10': item10}
     return items
 
 
-def count_similarities_test(similar_items: dict) -> dict:
+def count_similarities_related(connection: Connection, similar_items: dict) -> dict:
+    cursor = connection.cursor()
+
+    # Fill aux_matrix with values corresponding to number of relations between the items (the matrix is symmetric).
+    # They are included all related items to the similar items.
+    aux_matrix = initialize_matrix(similar_items.keys(), similar_items.keys())
+    outer_items = set()
+    for item in similar_items.values():
+        if item.related:
+            counts = Counter(item.related)
+            for item_id in counts:
+                if item_id in aux_matrix:
+                    aux_matrix[item_id][item.id] += counts[item_id]
+                    aux_matrix[item.id][item_id] += counts[item_id]
+        # else:
+    #     cur = cursor.execute("SELECT relatedItemId FROM item_related_list WHERE itemId = ?;", [item.id])
+    #     item.related = [row[0] for row in cur]
+    #     outer_items.update(item.related)
+    #     counts = Counter(item.related)
+    #     for item_id in counts:
+    #         if item_id not in aux_matrix:
+    #             aux_matrix[item_id] = {}
+    #         if item.id not in aux_matrix[item_id]:
+    #             aux_matrix[item_id][item.id] = 0
+    #         if item_id not in aux_matrix[item.id]:
+    #             aux_matrix[item.id][item_id] = 0
+    #         aux_matrix[item_id][item.id] += counts[item_id]
+    #         aux_matrix[item.id][item_id] += counts[item_id]
+    #
+    # outer_items.difference_update(similar_items.keys())
+    # for outer_item_id in outer_items:
+    #     cur = cursor.execute("SELECT relatedItemId FROM item_related_list WHERE itemId = ? AND relatedItemId IN ({});"
+    #                          .format(",".join(['"{}"'.format(item) for item in similar_items.keys()])),
+    #                          [outer_item_id])
+    #     related = [row[0] for row in cur]
+    #     counts = Counter(related)
+    #     for item_id in counts:
+    #         if item_id not in aux_matrix[outer_item_id]:
+    #             aux_matrix[outer_item_id][item_id] = 0
+    #         if outer_item_id not in aux_matrix[item_id]:
+    #             aux_matrix[item_id][outer_item_id] = 0
+    #         aux_matrix[item_id][outer_item_id] += counts[item_id]
+    #         aux_matrix[outer_item_id][item_id] += counts[item_id]
+
+    # # Count matrix as the result of aux_matrix to the power of 2, values are similarities between items that are
+    # # in relation in distance 2. Value is divided by 10 for comparing to the original values.
+    # matrix = initialize_matrix(similar_items.keys(), similar_items.keys())
+    # for i in similar_items.keys():
+    #     for j1 in aux_matrix[i]:
+    #         for j2 in aux_matrix:
+    #             if j2 in aux_matrix[j1]:
+    #                 print(i + ' ' + j1 + ' ' + j2)
+    #                 matrix[i][j2] += aux_matrix[i][j1] * aux_matrix[j1][j2] / 10
+    #
+    # # Sum the values - similarities of items in distance 1 and 2.
+    # for i in matrix:
+    #     for j in matrix:
+    #         matrix[i][j] += aux_matrix[i][j]
+
+    cursor.close()
+    # return matrix
+    return aux_matrix
+
+
+def initialize_matrix(rows: iter, cols: iter) -> dict:
+    matrix = {}
+    for i in rows:
+        matrix[i] = {}
+        for j in cols:
+            matrix[i][j] = 0
+    return matrix
+
+
+def count_similarities_test(connection: Connection, similar_items: dict) -> dict:
     similarity_matrix = {
         '1': {
             '2': 3, '3': 4, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0
@@ -189,11 +285,13 @@ def count_similarities_test(similar_items: dict) -> dict:
 
 
 if __name__ == "__main__":
-    product_id = ''
+    product_id = 'B00000JHX6'
     connection = create_connection()
     similarity_recommender = SimilarityRecommender(connection, product_id)
-    recommended = similarity_recommender.recommend_products(10, find_similar_items_test, count_similarities_test)
+    recommended = similarity_recommender.recommend_products(10, find_similar_items_related, count_similarities_related)
     print()
     print("----result----")
     for product in recommended:
-        print(product.id)
+        print(product.id + ' ' + product.title)
+
+    connection.close()
