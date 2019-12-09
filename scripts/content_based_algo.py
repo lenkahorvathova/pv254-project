@@ -1,3 +1,4 @@
+import time
 from collections import Counter
 from sqlite3 import Connection
 
@@ -333,8 +334,18 @@ def algorithm_related_with_category(product_id: str, recommendations_count: int)
 
 
 if __name__ == "__main__":
+    t0 = time.time()
     product_id = 'B00000JHX6'
-    recommended = algorithm_related_with_category(product_id, 10)
-    print("----result----")
+    recommended = algorithm_related(product_id, 10)
+    print("----result algorithm_related----")
     for product in recommended:
         print(product)
+    t1 = time.time()
+    print('algorithm_related took {:.2f}s'.format(t1 - t0))
+
+    product_id = 'B00000JHX6'
+    recommended = algorithm_related_with_category(product_id, 10)
+    print("----result algorithm_related_with_category----")
+    for product in recommended:
+        print(product)
+    print('algorithm_related_with_category took {:.2f}s'.format(time.time() - t1))

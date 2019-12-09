@@ -3,6 +3,7 @@ import gzip
 import sqlite3
 import time
 from datetime import datetime
+from sys import stdout
 
 from scripts.utils import create_connection
 
@@ -28,6 +29,7 @@ class DBSetup:
 
     def log(self, msg: str):
         print(msg)
+        stdout.flush()
         time.sleep(2)
 
     def log_billboard(self, msgs: list):
@@ -38,6 +40,7 @@ class DBSetup:
         print("This part took: {}".format(datetime.now() - LAST_TIME_CHECKPOINT))
         print("--------------------------------------")
         LAST_TIME_CHECKPOINT = datetime.now()
+        stdout.flush()
         time.sleep(2)
 
     def escape(self, input: str):

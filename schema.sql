@@ -44,5 +44,7 @@ CREATE TABLE IF NOT EXISTS algo_evaluation (id INTEGER NOT NULL PRIMARY KEY,
                                             sameCategory INT,
                                             siblingCategory INT,
                                             collaborativeFiltering INT,
+                                            contentBased INT,
+                                            contentBasedWithCategory INT,
                                             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                             FOREIGN KEY (itemId) REFERENCES item(id));

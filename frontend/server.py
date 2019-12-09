@@ -4,6 +4,7 @@ from random import shuffle
 from flask import Flask, render_template, abort, redirect, request
 
 from scripts.collaborative_filtering import collaboration_filtering
+from scripts.content_based_algo import algorithm_related, algorithm_related_with_category
 from scripts.naive_algo import recommend_products_by_related, recommend_products_by_category
 from scripts.random_algo import recommend_products_randomly
 from scripts.utils import create_connection
@@ -16,7 +17,9 @@ TYPES_OF_ALGORITHMS = [
     "related_also_viewed",
     "same_category",
     "sibling_category",
-    "collaborative_filtering"
+    "collaborative_filtering",
+    "content_based",
+    "content_based_with_category"
 ]
 
 
@@ -66,6 +69,12 @@ def get_recommendation(item_id: str, algo_type: str) -> (list, str):
 
     elif algo_type == "collaborative_filtering":
         products = collaboration_filtering(item_id, 10)
+
+    elif algo_type == "content_based":
+        products = algorithm_related(item_id, 10)
+
+    elif algo_type == "content_based_with_category":
+        products = algorithm_related_with_category(item_id, 10)
 
     result = [get_item_dict(product) for product in products]
     return result, algo_type
@@ -147,7 +156,8 @@ def feedback(item_id: str):
                 random, 
                 relatedAll, relatedAlsoBought, relatedAlsoViewed, 
                 sameCategory, siblingCategory, 
-                collaborativeFiltering)
+                collaborativeFiltering,
+                contentBased, contentBasedWithCategory)
             VALUES {}
         '''.format(tuple(to_insert))
 
