@@ -149,9 +149,11 @@ def find_similar_items_related(connection: Connection, main_item_id: str) -> dic
 
 def find_similar_items_category(connection: Connection, item_id: str) -> dict:
     cursor = connection.execute("SELECT categoryId FROM item_category_list WHERE itemId=(?)", [item_id])
-    category = cursor.fetchone()[0]
-    categories = {category}
-    actual_categories = {category}
+    categories = set()
+    actual_categories = set()
+    for cat in cursor.fetchall():
+        categories.add(cat[0])
+        actual_categories.add(cat[0])
     while actual_categories:
         new_categories = set()
         for category in actual_categories:
