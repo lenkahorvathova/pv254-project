@@ -38,18 +38,19 @@ def recommend_products_by_related(product_id: str, modification_type: str) -> li
 def recommend_products_by_category(product_id: str, modification_type: str) -> list:
     with create_connection() as connection:
         cursor = connection.execute("SELECT categoryId FROM item_category_list WHERE itemId=(?)", (product_id,))
-        product_category = cursor.fetchone()[0]
+        product_category_id = cursor.fetchone()[0]
 
         if modification_type == "same_category":
             cursor = connection.execute("SELECT itemId FROM item_category_list "
-                                        "WHERE categoryId=(?)", (product_category,))
+                                        "WHERE categoryId=(?)", (product_category_id,))
 
         elif modification_type == "sibling_category":
-            cursor = connection.execute("SELECT parentCategoryId FROM category WHERE id=(?)", (product_category,))
-            parent_id = cursor.fetchone()[0]
+            cursor = connection.execute("SELECT parentCategoryId FROM category WHERE id=(?)", (product_category_id,))
+            parent_category_id = cursor.fetchone()[0]
 
-            cursor = connection.execute("SELECT id FROM category WHERE parentCategoryId=(?)", (parent_id,))
+            cursor = connection.execute("SELECT id FROM category WHERE parentCategoryId=(?)", (parent_category_id,))
             category_siblings = [item[0] for item in cursor.fetchall()]
+            category_siblings.append(parent_category_id)
 
             cursor = connection.execute("SELECT itemId FROM item_category_list WHERE categoryId "
                                         "IN ({})".format(",".join([str(item) for item in category_siblings])))

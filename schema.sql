@@ -34,3 +34,15 @@ CREATE TABLE IF NOT EXISTS item_category_list (itemId TEXT NOT NULL,
 									                             categoryId INTEGER NOT NULL,
 									                             FOREIGN KEY (itemId) REFERENCES item(id),
 									                             FOREIGN KEY (categoryId) REFERENCES category(id));
+
+CREATE TABLE IF NOT EXISTS algo_evaluation (id INTEGER NOT NULL PRIMARY KEY,
+                                            itemId TEXT NOT NULL,
+                                            random INT,
+                                            relatedAll INT,
+                                            relatedAlsoBought INT,
+                                            relatedAlsoViewed INT,
+                                            sameCategory INT,
+                                            siblingCategory INT,
+                                            collaborativeFiltering INT,
+                                            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                            FOREIGN KEY (itemId) REFERENCES item(id));

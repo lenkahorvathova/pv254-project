@@ -276,6 +276,7 @@ class DBSetup:
         self.parse_meta_file(db_con, ratings_by_id)
         self.parse_related_and_categories(db_con)
 
+        db_con.execute("PRAGMA foreign_keys = on")
         db_con.close()
         end_time = datetime.now()
 
