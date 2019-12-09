@@ -149,6 +149,33 @@ def find_similar_items_related(connection: Connection, main_item_id: str) -> dic
     return result_items
 
 
+def find_similar_items_category(connection: Connection, item_id: str) -> dict:
+    cursor = connection.execute("SELECT categoryId FROM item_category_list WHERE itemId=(?)", [item_id])
+    category = cursor.fetchone()[0]
+    categories = {category}
+    actual_categories = {category}
+    while actual_categories:
+        new_categories = set()
+        for category in actual_categories:
+            cursor = connection.execute("SELECT id FROM category WHERE parentCategoryId=(?)", [category])
+            new_categories.update([cat[0] for cat in cursor.fetchall()])
+        categories.update(new_categories)
+        actual_categories = new_categories
+
+    cursor = connection.execute("SELECT itemId FROM item_category_list WHERE categoryId=(?)", [category])
+    ids = [item[0] for item in cursor.fetchall()]
+    result_items = {}
+    for id in ids:
+        if id != item_id:
+            cursor = connection.execute("SELECT title, imageUrl, overallRating FROM item WHERE id=(?)", [id])
+            row = cursor.fetchone()
+            item = Item()
+            item.set_properties(id, *row)
+            result_items[id] = item
+
+    return result_items
+
+
 def find_similar_items_test(connection: Connection, item_id: str) -> dict:
     item1 = Item()
     item2 = Item()
@@ -284,14 +311,33 @@ def count_similarities_test(connection: Connection, similar_items: dict) -> dict
     return similarity_matrix
 
 
-if __name__ == "__main__":
-    product_id = 'B00000JHX6'
+def algorithm_related(product_id: str, recommendations_count: int) -> list:
     connection = create_connection()
     similarity_recommender = SimilarityRecommender(connection, product_id)
-    recommended = similarity_recommender.recommend_products(10, find_similar_items_related, count_similarities_related)
-    print()
-    print("----result----")
+    recommended = similarity_recommender.recommend_products(recommendations_count, find_similar_items_related, count_similarities_related)
+    recommended_ids = []
     for product in recommended:
-        print(product.id + ' ' + product.title)
+        recommended_ids.append(product.id)
 
     connection.close()
+    return recommended_ids
+
+
+def algorithm_related_with_category(product_id: str, recommendations_count: int) -> list:
+    connection = create_connection()
+    similarity_recommender = SimilarityRecommender(connection, product_id)
+    recommended = similarity_recommender.recommend_products(recommendations_count, find_similar_items_category, count_similarities_related)
+    recommended_ids = []
+    for product in recommended:
+        recommended_ids.append(product.id)
+
+    connection.close()
+    return recommended_ids
+
+
+if __name__ == "__main__":
+    product_id = 'B00000JHX6'
+    recommended = algorithm_related_with_category(product_id, 10)
+    print("----result----")
+    for product in recommended:
+        print(product)
