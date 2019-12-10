@@ -28,9 +28,9 @@ Project for [PV254 Recommender Systems](https://is.muni.cz/predmet/fi/podzim2017
     ```
         $ python3 -m venv venv
         $ source venv/bin/activate (Mac)
-        $ venv\Scripts\activate (Windows)
+        $ source venv\Scripts\activate (Windows)
     ```
-    - to deactivate Python environment: `deactivate`
+    - to deactivate Python environment: `$ deactivate`
 * Install requirements:
     ```
         $ pip install -r requirements.txt 

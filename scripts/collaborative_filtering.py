@@ -124,10 +124,10 @@ class KnnRecommender:
             idx, n_recommendations)
         # print results
         recommended_item_id = []
-        print('Recommendations for {}:'.format(itemId))
+        # print('Recommendations for {}:'.format(itemId))
         for i, (idx, dist) in enumerate(raw_recommends):
-            print('{0}: {1}, with distance '
-                  'of {2}'.format(i + 1, self.hashmap[idx], dist))
+            # print('{0}: {1}, with distance '
+            #       'of {2}'.format(i + 1, self.hashmap[idx], dist))
             recommended_item_id.insert(0, self.hashmap[idx])
         del raw_recommends
         return recommended_item_id
@@ -165,9 +165,9 @@ def hybrid_algorithm(itemId, n_recommendations):
     item_id_with_highest_review_mean = recommended_item_id[0]
     for itemId in recommended_item_id:
         if mean_per_item[itemId] > mean_per_item[item_id_with_highest_review_mean]:
-            print('new value for item_id_with_highest_review_mean', itemId, mean_per_item[itemId])
+            # print('new value for item_id_with_highest_review_mean', itemId, mean_per_item[itemId])
             item_id_with_highest_review_mean = itemId
-    print('best item id to recommend according to hybrid', item_id_with_highest_review_mean)
+    # print('best item id to recommend according to hybrid', item_id_with_highest_review_mean)
 
     return recommended_item_id[0], item_id_with_highest_review_mean
 

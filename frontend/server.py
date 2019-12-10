@@ -160,8 +160,6 @@ def feedback(item_id: str):
                 contentBased, contentBasedWithCategory)
             VALUES {}
         '''.format(tuple(to_insert))
-
-        print(query)
         connection.execute(query)
 
     item_id = get_random_item_id()
