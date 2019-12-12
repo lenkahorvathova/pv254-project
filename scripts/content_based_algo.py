@@ -165,7 +165,7 @@ def find_similar_items_category(connection: Connection, item_id: str) -> dict:
         categories.update(new_categories)
         actual_categories = new_categories
 
-    cursor = connection.execute("SELECT itemId FROM item_category_list WHERE categoryId=(?)", [category])
+    cursor = connection.execute("SELECT itemId FROM item_category_list WHERE categoryId IN ({});".format(",".join(['"{}"'.format(category) for category in categories])))
     ids = [item[0] for item in cursor.fetchall()]
     result_items = {}
     for id in ids:

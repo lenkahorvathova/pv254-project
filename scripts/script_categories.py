@@ -2,6 +2,8 @@ import gzip
 import operator
 from collections import Counter
 
+from scripts.utils import create_connection
+
 
 def parse(path):
     g = gzip.open(path, 'r')
@@ -9,8 +11,29 @@ def parse(path):
         yield eval(l)
 
 
+# from the database
+def categories_statistics():
+    connection = create_connection()
+    category_items_counts_cur = connection.execute("SELECT count(itemId) FROM item_category_list GROUP BY categoryId;")
+    category_items_counts = [c[0] for c in category_items_counts_cur]
+    category_items_counts_sorted = sorted(category_items_counts)
+    category_items_counts_statistics = Counter(category_items_counts)
+    category_items_counts_statistics_sorted = sorted(category_items_counts_statistics.items())
+
+    with open('../data/statistics/category_products_counts.txt', 'w', encoding='utf-8') as outp:
+        outp.write('Postupně pro jednotlivé kategorie počty produktů.\n')
+        for c in category_items_counts_sorted:
+            outp.write(str(c) + '\n')
+
+    with open('../data/statistics/category_products_counts_statistics.txt', 'w', encoding='utf-8') as outp:
+        outp.write('x\ty ... Je y kategorií, které mají právě x produktů.\n')
+        for c in category_items_counts_statistics_sorted:
+            outp.write(str(c[0]) + '\t' + str(c[1]) + '\n')
+
+
+# From the file
 # Must exist directory data/statistics
-def categories_statistics(cat_file='Toys_and_Games'):
+def categories_statistics_from_file(cat_file='Toys_and_Games'):
     categories = []
     counts_for_products = []
 
