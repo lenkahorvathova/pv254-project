@@ -50,7 +50,8 @@ def recommend_products_by_category(product_id: str, modification_type: str) -> l
 
             cursor = connection.execute("SELECT id FROM category WHERE parentCategoryId=(?)", (parent_category_id,))
             category_siblings = [item[0] for item in cursor.fetchall()]
-            category_siblings.append(parent_category_id)
+            if parent_category_id:
+                category_siblings.append(parent_category_id)
 
             cursor = connection.execute("SELECT itemId FROM item_category_list WHERE categoryId "
                                         "IN ({})".format(",".join([str(item) for item in category_siblings])))

@@ -64,8 +64,11 @@ class SimilarityRecommender:
                 best_item_id = item.id
                 best = item.overall_rating
 
-        selected_ids = {best_item_id}
-        self.similarity_matrix.pop(best_item_id)
+        if best_item_id:
+            selected_ids = {best_item_id}
+            self.similarity_matrix.pop(best_item_id)
+        else:
+            selected_ids = {}
 
         for i in range(0, count - 1):
             less_similar_item_id = None
@@ -314,7 +317,8 @@ def count_similarities_test(connection: Connection, similar_items: dict) -> dict
 def algorithm_related(product_id: str, recommendations_count: int) -> list:
     connection = create_connection()
     similarity_recommender = SimilarityRecommender(connection, product_id)
-    recommended = similarity_recommender.recommend_products(recommendations_count, find_similar_items_related, count_similarities_related)
+    recommended = similarity_recommender.recommend_products(recommendations_count, find_similar_items_related,
+                                                            count_similarities_related)
     recommended_ids = []
     for product in recommended:
         recommended_ids.append(product.id)
@@ -326,7 +330,8 @@ def algorithm_related(product_id: str, recommendations_count: int) -> list:
 def algorithm_related_with_category(product_id: str, recommendations_count: int) -> list:
     connection = create_connection()
     similarity_recommender = SimilarityRecommender(connection, product_id)
-    recommended = similarity_recommender.recommend_products(recommendations_count, find_similar_items_category, count_similarities_related)
+    recommended = similarity_recommender.recommend_products(recommendations_count, find_similar_items_category,
+                                                            count_similarities_related)
     recommended_ids = []
     for product in recommended:
         recommended_ids.append(product.id)
